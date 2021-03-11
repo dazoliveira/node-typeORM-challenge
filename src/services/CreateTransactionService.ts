@@ -21,11 +21,9 @@ class CreateTransactionService {
     category,
   }: Request): Promise<Transaction> {
     const transactionRepository = getCustomRepository(TransactionRepository);
-    const balance = await transactionRepository.getBalance();
-    if (type === 'outcome') {
-      if (balance.total < value) {
-        throw new AppError('Value exceed your credit!');
-      }
+    const { total } = await transactionRepository.getBalance();
+    if (type === 'outcome' && total < value) {
+      throw new AppError('You do not have enough balance');
     }
     const categoryRepository = getRepository(Category);
     const findedCategory = await categoryRepository.findOne({
@@ -39,7 +37,7 @@ class CreateTransactionService {
         title,
         value,
         type,
-        category_id: findedCategory.id,
+        category: findedCategory,
       });
     } else {
       const newCategory = categoryRepository.create({
@@ -51,7 +49,7 @@ class CreateTransactionService {
         title,
         value,
         type,
-        category_id: newCategory.id,
+        category: newCategory,
       });
     }
 
